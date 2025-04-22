@@ -14,6 +14,15 @@ async function bootstrap() {
     })
   );
 
+  app.getHttpAdapter().get('/api-health', (req, res) => {
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      service: 'Task Management API',
+      version: '1.0.0'
+    });
+  });
+
   const port = process.env.PORT ?? 3000
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}`);

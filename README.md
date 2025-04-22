@@ -1,98 +1,150 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Task Management System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Sistem manajemen tugas (Task Management) yang dibuat dengan NestJS, PostgreSQL, dan Redis.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Fitur
 
-## Description
+**1. Authentication & Authorization**
+* JWT Authentication
+* Role-based access control (Admin, User)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+**2. Database**
+* Entity: User, Task
+* Relasi: One-to-Many (1 User punya banyak Tasks)
+* Transaksi: Saat assign task ke user dan update status
 
-## Project setup
+**3. External API Integration**
+* Integrasi ke Holiday API — untuk tandai task tidak bisa dikerjakan saat hari libur
+
+**Fitur Bonus**
+* Caching (Redis) - Simpan hasil fetch API eksternal (libur nasional)
+* Logging - Menggunakan Logger bawaan NestJS + interceptor
+
+## Setup dengan Docker
+
+### Prasyarat
+
+* [Docker](https://www.docker.com/get-started)
+* [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Langkah-langkah
+
+1. Clone repository ini:
+   ```bash
+   git clone <repository-url>
+   cd task-management-system
+   ```
+
+2. Buat file `.env` dari file contoh:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Jalankan dengan Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+   Ini akan menjalankan:
+   - Aplikasi NestJS di port 3000
+   - PostgreSQL di port 5432
+   - Redis di port 6379
+   - PgAdmin di port 5050 (opsional, untuk mengelola database)
+
+4. Aplikasi dapat diakses di [http://localhost:3000](http://localhost:3000)
+
+5. PgAdmin (untuk mengelola database) dapat diakses di [http://localhost:5050](http://localhost:5050)
+   - Email: admin@admin.com
+   - Password: admin
+
+### Pengembangan
+
+Saat container berjalan, perubahan kode akan otomatis di-reload berkat volume mapping dan mode development.
+
+### Deployment Produksi
+
+Untuk deployment ke produksi, gunakan file docker-compose.prod.yml:
 
 ```bash
-$ npm install
+# Pastikan variabel lingkungan yang dibutuhkan tersedia
+export DB_PASSWORD=strong_password
+export JWT_SECRET=secure_jwt_secret
+export REDIS_PASSWORD=redis_secure_password
+
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-## Compile and run the project
+## Struktur Project
+
+```
+src/
+├── auth/                           # Modul autentikasi
+├── users/                          # Modul pengguna
+├── tasks/                          # Modul task management
+├── common/                         # Komponen yang digunakan bersama
+│   └── guards/                     # Guards untuk otentikasi dan otorisasi
+│   └── decorators/                 # Decorator untuk public dan roles
+│   └── interceptors/               # Interceptor untuk logging
+├── external/                       # Integrasi API eksternal
+│   └── holiday-api/                # Integrasi dengan API Holiday
+├── main.ts                         # Entry point aplikasi
+└── app.module.ts                   # Modul utama aplikasi
+```
+
+## API Endpoints
+
+| Method | Endpoint | Akses | Keterangan |
+|--------|----------|-------|------------|
+| POST | /auth/register | public | Daftar akun |
+| POST | /auth/login | public | Login |
+| GET | /tasks | user | Lihat task |
+| POST | /tasks | user | Tambah task |
+| PATCH | /tasks/:id | user | Update task |
+| DELETE | /tasks/:id | user | Hapus task |
+| PATCH | /tasks/:id/assign | admin | Assign task ke user |
+| GET | /holidays/:year | user | Ambil data libur nasional dari API eksternal |
+| GET | /holidays/check | user | Cek apakah tanggal tertentu libur |
+
+## Pengembangan Tanpa Docker
+
+### Prasyarat
+
+* Node.js (>= 14.x)
+* PostgreSQL
+* Redis
+
+### Instalasi
+
+```bash
+npm install
+```
+
+### Konfigurasi
+
+Siapkan file `.env` dengan contoh di `.env.example`.
+
+### Menjalankan Aplikasi
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
-$ npm run start:dev
+npm run start:dev
 
 # production mode
-$ npm run start:prod
+npm run start:prod
 ```
 
-## Run tests
+## Testing
 
 ```bash
 # unit tests
-$ npm run test
+npm run test
 
 # e2e tests
-$ npm run test:e2e
+npm run test:e2e
 
 # test coverage
-$ npm run test:cov
+npm run test:cov
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

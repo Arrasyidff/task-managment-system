@@ -36,12 +36,15 @@ import { ExternalModule } from './external/external.module';
       isGlobal: true,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        store: redisStore,
-        host: configService.get('REDIS_HOST', 'localhost'),
-        port: configService.get('REDIS_PORT', 6379),
-        ttl: 60 * 60 * 24
-      }),
+      useFactory: (configService: ConfigService) => {
+        return {
+          store: redisStore, // Bukan fungsi, tapi module itu sendiri
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD', '') || undefined,
+          ttl: 60 * 60 * 24 // 24 hours
+        };
+      },
     }),
     UsersModule,
     AuthModule,
