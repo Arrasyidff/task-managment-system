@@ -9,6 +9,8 @@ import * as redisStore from 'cache-manager-redis-store';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -40,7 +42,9 @@ import { UsersModule } from './users/users.module';
         ttl: 60 * 60 * 24
       }),
     }),
-    UsersModule
+    UsersModule,
+    AuthModule,
+    TasksModule
   ],
   controllers: [AppController],
   providers: [
