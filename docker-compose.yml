@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: development
+    container_name: task-management-app
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_HOST=postgres
+      - DB_PORT=5450
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE=task_management
+      - DB_SYNC=true
+      - JWT_SECRET=your_super_secret_key_here
+      - JWT_EXPIRES_IN=1d
+      - REDIS_HOST=redis
+      - REDIS_PORT=6350
+      - COUNTRY_CODE=ID
+    networks:
+      - task-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: task-management-postgres
+    ports:
+      - '5450:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=task_management
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - task-network
+
+  redis:
+    image: redis:alpine
+    container_name: task-management-redis
+    ports:
+      - '6350:6379'
+    volumes:
+      - redis-data:/data
+    networks:
+      - task-network
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: task-management-pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - '5050:80'
+    depends_on:
+      - postgres
+    networks:
+      - task-network
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  task-network:
+    driver: bridge
