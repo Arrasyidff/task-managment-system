@@ -37,18 +37,12 @@ import { ExternalModule } from './external/external.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const host = configService.get('REDIS_HOST', 'localhost');
-        const port = configService.get('REDIS_PORT', 6379);
-        const password = configService.get('REDIS_PASSWORD', '');
-        
         return {
-          store: redisStore,
-          socket: {
-            host,
-            port,
-          },
-          password: password || undefined,
-          ttl: 60 * 60 * 24, // 24 hours
+          store: redisStore, // Bukan fungsi, tapi module itu sendiri
+          host: configService.get('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get('REDIS_PASSWORD', '') || undefined,
+          ttl: 60 * 60 * 24 // 24 hours
         };
       },
     }),

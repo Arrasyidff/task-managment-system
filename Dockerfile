@@ -6,8 +6,8 @@ WORKDIR /usr/src/app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with --legacy-peer-deps flag
+RUN npm install --legacy-peer-deps
 
 # Copy app source
 COPY . .
@@ -27,8 +27,8 @@ WORKDIR /usr/src/app
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production
+# Install only production dependencies with --legacy-peer-deps flag
+RUN npm ci --only=production --legacy-peer-deps
 
 # Copy built app from development stage
 COPY --from=development /usr/src/app/dist ./dist
