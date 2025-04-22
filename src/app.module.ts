@@ -11,6 +11,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
+import { ExternalModule } from './external/external.module';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { TasksModule } from './tasks/tasks.module';
     }),
     UsersModule,
     AuthModule,
-    TasksModule
+    TasksModule,
+    ExternalModule
   ],
   controllers: [AppController],
   providers: [
