@@ -47,20 +47,20 @@ export class UsersService {
   async findAll(): Promise<ResponseUserDto[]> {
     const users = await this.usersRepository.find();
     return users.map(user => {
-      const { password, ...userWithoutPassword } = user;
-      return new ResponseUserDto(userWithoutPassword);
+      return this.userWithoutPassword(user);
     })
   }
 
-  async findOneById(id: string): Promise<ResponseUserDto> {
+  async findOneById(id: string, isIncludePassword: boolean = true): Promise<ResponseUserDto | User> {
     const user = await this.usersRepository.findOne({ where: { id } });
     
     if (!user) {
       throw new NotFoundException(`User with ID "${id}" not found`);
     }
     
-    const { password, ...userWithoutPassword } = user;
-    return new ResponseUserDto(userWithoutPassword);
+    if (isIncludePassword) return user
+
+    return this.userWithoutPassword(user);
   }
 
   async findOneByUsername(username: string): Promise<User> {
@@ -80,5 +80,11 @@ export class UsersService {
     }
     
     return user;
+  }
+
+  userWithoutPassword(user: User): ResponseUserDto
+  {
+    const { password, ...userWithoutPassword } = user;
+    return new ResponseUserDto(userWithoutPassword);
   }
 }

@@ -21,6 +21,6 @@ export class UsersController {
   @Get(':id')
   @Roles(Role.ADMIN)
   findOne(@Param('id') id: string): Promise<ResponseUserDto> {
-    return this.usersService.findOneById(id);
+    return this.usersService.findOneById(id, false);
   }
 }

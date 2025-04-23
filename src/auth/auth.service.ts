@@ -6,6 +6,7 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { LoginDto } from './dto/auth.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { User } from '../users/entities/user.entity';
+import { ResponseUserDto } from 'src/users/dto/response-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -16,11 +17,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createUserDto);
+  async register(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
+    const user = await this.usersService.create(createUserDto)
+    return this.usersService.userWithoutPassword(user);
   }
 
-  async login(loginDto: LoginDto): Promise<{ accessToken: string; user: Partial<User> }> {
+  async login(loginDto: LoginDto): Promise<{ accessToken: string; user: ResponseUserDto }> {
     const { username, password } = loginDto;
     let user: User;
 
@@ -48,12 +50,9 @@ export class AuthService {
     
     this.logger.log(`User logged in: ${user.id}`);
     
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-    
     return {
       accessToken,
-      user: userWithoutPassword,
+      user: this.usersService.userWithoutPassword(user),
     };
   }
 }
