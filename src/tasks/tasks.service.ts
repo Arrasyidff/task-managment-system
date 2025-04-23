@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Task } from './entities/task.entity';
@@ -9,7 +9,7 @@ import { AssignTaskDto } from './dto/assign-task.dto';
 import { UsersService } from '../users/users.service';
 import { Role } from '../users/enums/role.enum';
 import { ResponseTaskDto } from './dto/response-task.dto';
-import { ResponseUserDto } from 'src/users/dto/response-user.dto';
+import { HolidayApiService } from 'src/external/holiday-api/holiday-api.service';
 
 @Injectable()
 export class TasksService {
@@ -19,10 +19,20 @@ export class TasksService {
     @InjectRepository(Task)
     private tasksRepository: Repository<Task>,
     private usersService: UsersService,
+    private holidayApiService: HolidayApiService,
     private dataSource: DataSource,
   ) {}
 
   async create(createTaskDto: CreateTaskDto, currentUser: User): Promise<ResponseTaskDto> {
+    if (createTaskDto.dueDate) {
+      const dueDate = new Date(createTaskDto.dueDate);
+      const isHoliday = await this.holidayApiService.isHoliday(dueDate);
+      
+      if (isHoliday) {
+        throw new BadRequestException('Cannot schedule task on a holiday. Please select a different date.');
+      }
+    }
+    
     const task = this.tasksRepository.create({
       ...createTaskDto,
       userId: currentUser.id
@@ -48,9 +58,9 @@ export class TasksService {
       });
     }
     
-    return tasks.map(task => {
-      return this.responseTaskDto(task, task.user as User);
-    });
+    return Promise.all(tasks.map(task => 
+      this.responseTaskDto(task, task.user as User)
+    ));
   }
 
   async findOne(id: string, currentUser: User, isDtoResponse: boolean = false): Promise<ResponseTaskDto | Task> {
@@ -75,10 +85,15 @@ export class TasksService {
     return task;
   }
 
-  responseTaskDto(task: Task, user: User): ResponseTaskDto
+  async responseTaskDto(task: Task, user: User): Promise<ResponseTaskDto>
   {
+    let isOnHoliday = false;
+    if (task.dueDate) {
+      isOnHoliday = await this.holidayApiService.isHoliday(new Date(task.dueDate));
+    }
     return new ResponseTaskDto({
       ...task,
+      isOnHoliday: isOnHoliday,
       user: this.usersService.userWithoutPassword(user)
     });
   }
@@ -89,6 +104,16 @@ export class TasksService {
     // Only task owner or admin can update tasks
     if (currentUser.role !== Role.ADMIN && task.userId !== currentUser.id) {
       throw new ForbiddenException('You do not have permission to update this task');
+    }
+
+    // Validasi tanggal baru jika ada perubahan due date
+    if (updateTaskDto.dueDate) {
+      const newDueDate = new Date(updateTaskDto.dueDate);
+      const isHoliday = await this.holidayApiService.isHoliday(newDueDate);
+      
+      if (isHoliday) {
+        throw new BadRequestException('Cannot reschedule task to a holiday. Please select a different date.');
+      }
     }
 
     // Update the task properties
@@ -141,6 +166,13 @@ export class TasksService {
       throw error;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  private async validateTaskDate(date: Date): Promise<void> {
+    const isHoliday = await this.holidayApiService.isHoliday(date);
+    if (isHoliday) {
+      throw new BadRequestException('Cannot schedule task on a holiday. Please select a different date.');
     }
   }
 }

@@ -11,6 +11,7 @@ export class ResponseTaskDto {
   dueDate: Date;
   userId: string;
   user?: ResponseUserDto;
+  isOnHoliday?: boolean;
   createdAt: Date;
   updatedAt: Date;
 
