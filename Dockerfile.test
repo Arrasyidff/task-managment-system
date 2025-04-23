@@ -1,0 +1,19 @@
+FROM node:20.3.0-alpine AS test
+
+# Install dependencies needed for bcrypt and sqlite3
+RUN apk add --no-cache python3 make g++ sqlite
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies including devDependencies
+RUN npm install
+
+# Copy app source
+COPY . .
+
+# Command to run tests
+CMD ["npm", "run", "test:e2e"]

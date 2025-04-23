@@ -40,11 +40,17 @@ export class TasksService {
     if (currentUser.role === Role.ADMIN) {
       tasks = await this.tasksRepository.find({
         relations: ['user'],
+        order: {
+          createdAt: 'ASC'
+        }
       });
     } else {
       tasks = await this.tasksRepository.find({
         where: { userId: currentUser.id },
         relations: ['user'],
+        order: {
+          createdAt: 'ASC'
+        }
       });
     }
     
