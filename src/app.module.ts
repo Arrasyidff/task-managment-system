@@ -38,7 +38,7 @@ import { ExternalModule } from './external/external.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         return {
-          store: redisStore, // Bukan fungsi, tapi module itu sendiri
+          store: redisStore,
           host: configService.get('REDIS_HOST', 'localhost'),
           port: configService.get<number>('REDIS_PORT', 6379),
           password: configService.get('REDIS_PASSWORD', '') || undefined,

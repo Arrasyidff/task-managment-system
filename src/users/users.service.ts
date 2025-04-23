@@ -5,6 +5,7 @@ import * as bcrypt from 'bcryptjs';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Role } from './enums/role.enum';
+import { ResponseUserDto } from './dto/response-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -43,18 +44,23 @@ export class UsersService {
     return savedUser;
   }
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findAll(): Promise<ResponseUserDto[]> {
+    const users = await this.usersRepository.find();
+    return users.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return new ResponseUserDto(userWithoutPassword);
+    })
   }
 
-  async findOneById(id: string): Promise<User> {
+  async findOneById(id: string): Promise<ResponseUserDto> {
     const user = await this.usersRepository.findOne({ where: { id } });
     
     if (!user) {
       throw new NotFoundException(`User with ID "${id}" not found`);
     }
     
-    return user;
+    const { password, ...userWithoutPassword } = user;
+    return new ResponseUserDto(userWithoutPassword);
   }
 
   async findOneByUsername(username: string): Promise<User> {

@@ -8,6 +8,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { AssignTaskDto } from './dto/assign-task.dto';
 import { UsersService } from '../users/users.service';
 import { Role } from '../users/enums/role.enum';
+import { ResponseTaskDto } from './dto/response-task.dto';
 
 @Injectable()
 export class TasksService {
@@ -92,7 +93,7 @@ export class TasksService {
     this.logger.log(`Task deleted: ${id} by user: ${currentUser.id}`);
   }
 
-  async assignTask(id: string, assignTaskDto: AssignTaskDto): Promise<Task> {
+  async assignTask(id: string, assignTaskDto: AssignTaskDto): Promise<ResponseTaskDto> {
     const { userId } = assignTaskDto;
     const user = await this.usersService.findOneById(userId);
 
@@ -109,14 +110,13 @@ export class TasksService {
       }
       
       task.userId = userId;
-      task.user = user;
       
       const updatedTask = await queryRunner.manager.save(task);
       
       await queryRunner.commitTransaction();
       this.logger.log(`Task ${id} assigned to user ${userId}`);
       
-      return updatedTask;
+      return new ResponseTaskDto({...updatedTask, user: user});
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Failed to assign task ${id} to user ${userId}: ${error.message}`);
