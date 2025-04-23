@@ -9,6 +9,7 @@ import { AssignTaskDto } from './dto/assign-task.dto';
 import { UsersService } from '../users/users.service';
 import { Role } from '../users/enums/role.enum';
 import { ResponseTaskDto } from './dto/response-task.dto';
+import { ResponseUserDto } from 'src/users/dto/response-user.dto';
 
 @Injectable()
 export class TasksService {
@@ -21,33 +22,38 @@ export class TasksService {
     private dataSource: DataSource,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto, currentUser: User): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto, currentUser: User): Promise<ResponseTaskDto> {
     const task = this.tasksRepository.create({
       ...createTaskDto,
-      userId: currentUser.id,
-      user: currentUser,
+      userId: currentUser.id
     });
 
     const savedTask = await this.tasksRepository.save(task);
     this.logger.log(`Task created: ${savedTask.id} by user: ${currentUser.id}`);
-    return savedTask;
+
+    return this.responseTaskDto(savedTask, currentUser);
   }
 
-  async findAll(currentUser: User): Promise<Task[]> {
-    // Admin can see all tasks, users can only see their own
+  async findAll(currentUser: User): Promise<ResponseTaskDto[]> {
+    let tasks: Task[];
+    
     if (currentUser.role === Role.ADMIN) {
-      return this.tasksRepository.find({
+      tasks = await this.tasksRepository.find({
         relations: ['user'],
       });
     } else {
-      return this.tasksRepository.find({
+      tasks = await this.tasksRepository.find({
         where: { userId: currentUser.id },
         relations: ['user'],
       });
     }
+    
+    return tasks.map(task => {
+      return this.responseTaskDto(task, task.user as User);
+    });
   }
 
-  async findOne(id: string, currentUser: User): Promise<Task> {
+  async findOne(id: string, currentUser: User, isDtoResponse: boolean = false): Promise<ResponseTaskDto | Task> {
     const task = await this.tasksRepository.findOne({
       where: { id },
       relations: ['user'],
@@ -62,11 +68,23 @@ export class TasksService {
       throw new ForbiddenException('You do not have permission to access this task');
     }
 
+    if (isDtoResponse) {
+      return this.responseTaskDto(task, currentUser);
+    }
+
     return task;
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, currentUser: User): Promise<Task> {
-    const task = await this.findOne(id, currentUser);
+  responseTaskDto(task: Task, user: User): ResponseTaskDto
+  {
+    return new ResponseTaskDto({
+      ...task,
+      user: this.usersService.userWithoutPassword(user)
+    });
+  }
+
+  async update(id: string, updateTaskDto: UpdateTaskDto, currentUser: User): Promise<ResponseTaskDto> {
+    const task = await this.findOne(id, currentUser) as Task;
 
     // Only task owner or admin can update tasks
     if (currentUser.role !== Role.ADMIN && task.userId !== currentUser.id) {
@@ -78,11 +96,11 @@ export class TasksService {
     
     const updatedTask = await this.tasksRepository.save(task);
     this.logger.log(`Task updated: ${id} by user: ${currentUser.id}`);
-    return updatedTask;
+    return this.responseTaskDto(updatedTask, currentUser);
   }
 
   async remove(id: string, currentUser: User): Promise<void> {
-    const task = await this.findOne(id, currentUser);
+    const task = await this.findOne(id, currentUser) as Task;
 
     // Only task owner or admin can delete tasks
     if (currentUser.role !== Role.ADMIN && task.userId !== currentUser.id) {
