@@ -1,150 +1,149 @@
-# Task Management System
+# Task Management System API
 
-Sistem manajemen tugas (Task Management) yang dibuat dengan NestJS, PostgreSQL, dan Redis.
+Task Management System adalah aplikasi backend berbasis REST API yang dikembangkan dengan NestJS framework. Sistem ini memungkinkan pengguna untuk membuat, mengelola, dan melacak tugas dengan berbagai fitur seperti autentikasi, otorisasi berbasis peran, dan integrasi dengan layanan eksternal.
 
-## Fitur
+## Fitur Utama
 
-**1. Authentication & Authorization**
-* JWT Authentication
-* Role-based access control (Admin, User)
+### Autentikasi & Otorisasi
+- JWT Authentication
+- Role-based Access Control (Admin, User)
+- Password hashing dan keamanan
 
-**2. Database**
-* Entity: User, Task
-* Relasi: One-to-Many (1 User punya banyak Tasks)
-* Transaksi: Saat assign task ke user dan update status
+### Manajemen Task
+- CRUD operasi lengkap (Create, Read, Update, Delete)
+- Filter task berdasarkan status, prioritas
+- Sorting task berdasarkan berbagai kriteria
+- Assign task ke user (Admin only)
 
-**3. External API Integration**
-* Integrasi ke Holiday API — untuk tandai task tidak bisa dikerjakan saat hari libur
+### Integrasi API Eksternal
+- Integrasi dengan Holiday API untuk mendapatkan data hari libur
+- Verifikasi tanggal tugas terhadap hari libur
 
-**Fitur Bonus**
-* Caching (Redis) - Simpan hasil fetch API eksternal (libur nasional)
-* Logging - Menggunakan Logger bawaan NestJS + interceptor
+### Optimasi & Performa
+- Redis caching untuk hasil API eksternal
+- Logging untuk monitoring dan debugging
 
-## Setup dengan Docker
+### Database
+- Relasi one-to-many antara User dan Task
+- Transaction management untuk operasi kritis
+- Data validation menggunakan DTO
 
-### Prasyarat
+## Teknologi yang Digunakan
 
-* [Docker](https://www.docker.com/get-started)
-* [Docker Compose](https://docs.docker.com/compose/install/)
+- **NestJS**: Framework backend modern untuk Node.js
+- **TypeScript**: Static typing untuk JavaScript
+- **TypeORM**: Object Relational Mapping untuk database
+- **PostgreSQL**: Database relasional
+- **Redis**: Cache management
+- **JWT**: JSON Web Token untuk autentikasi
+- **Jest & Supertest**: Testing framework
+- **Docker**: Containerization dan deployment
+- **class-validator & class-transformer**: Validasi data dan transformasi
 
-### Langkah-langkah
-
-1. Clone repository ini:
-   ```bash
-   git clone <repository-url>
-   cd task-management-system
-   ```
-
-2. Buat file `.env` dari file contoh:
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Jalankan dengan Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
-
-   Ini akan menjalankan:
-   - Aplikasi NestJS di port 3000
-   - PostgreSQL di port 5432
-   - Redis di port 6379
-   - PgAdmin di port 5050 (opsional, untuk mengelola database)
-
-4. Aplikasi dapat diakses di [http://localhost:3000](http://localhost:3000)
-
-5. PgAdmin (untuk mengelola database) dapat diakses di [http://localhost:5050](http://localhost:5050)
-   - Email: admin@admin.com
-   - Password: admin
-
-### Pengembangan
-
-Saat container berjalan, perubahan kode akan otomatis di-reload berkat volume mapping dan mode development.
-
-### Deployment Produksi
-
-Untuk deployment ke produksi, gunakan file docker-compose.prod.yml:
-
-```bash
-# Pastikan variabel lingkungan yang dibutuhkan tersedia
-export DB_PASSWORD=strong_password
-export JWT_SECRET=secure_jwt_secret
-export REDIS_PASSWORD=redis_secure_password
-
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-## Struktur Project
+## Struktur Proyek
 
 ```
 src/
-├── auth/                           # Modul autentikasi
-├── users/                          # Modul pengguna
-├── tasks/                          # Modul task management
-├── common/                         # Komponen yang digunakan bersama
-│   └── guards/                     # Guards untuk otentikasi dan otorisasi
-│   └── decorators/                 # Decorator untuk public dan roles
-│   └── interceptors/               # Interceptor untuk logging
-├── external/                       # Integrasi API eksternal
-│   └── holiday-api/                # Integrasi dengan API Holiday
-├── main.ts                         # Entry point aplikasi
-└── app.module.ts                   # Modul utama aplikasi
+├── auth/                       # Autentikasi dan otorisasi
+│   ├── dto/
+│   ├── interfaces/
+│   ├── strategies/
+│   ├── auth.controller.ts
+│   ├── auth.module.ts
+│   └── auth.service.ts
+├── users/                      # Manajemen user
+│   ├── dto/
+│   ├── entities/
+│   ├── enums/
+│   ├── users.controller.ts
+│   ├── users.module.ts
+│   └── users.service.ts
+├── tasks/                      # Manajemen task
+│   ├── dto/
+│   ├── entities/
+│   ├── tasks.controller.ts
+│   ├── tasks.module.ts
+│   └── tasks.service.ts
+├── common/                     # Komponen umum yang digunakan
+│   ├── guards/
+│   ├── decorators/
+│   └── interceptors/
+├── external/                   # Integrasi API eksternal
+│   └── holiday-api/
+├── main.ts                     # Entry point aplikasi
+└── app.module.ts               # Root module
 ```
 
 ## API Endpoints
 
-| Method | Endpoint | Akses | Keterangan |
-|--------|----------|-------|------------|
-| POST | /auth/register | public | Daftar akun |
-| POST | /auth/login | public | Login |
-| GET | /tasks | user | Lihat task |
-| POST | /tasks | user | Tambah task |
-| PATCH | /tasks/:id | user | Update task |
-| DELETE | /tasks/:id | user | Hapus task |
-| PATCH | /tasks/:id/assign | admin | Assign task ke user |
-| GET | /holidays/:year | user | Ambil data libur nasional dari API eksternal |
-| GET | /holidays/check | user | Cek apakah tanggal tertentu libur |
+### Authentication
+- `POST /auth/register` - Registrasi user baru
+- `POST /auth/login` - Login dan mendapatkan token JWT
 
-## Pengembangan Tanpa Docker
+### Tasks
+- `GET /tasks` - Mendapatkan daftar task
+- `GET /tasks/:id` - Mendapatkan detail task
+- `POST /tasks` - Membuat task baru
+- `PATCH /tasks/:id` - Mengupdate task
+- `DELETE /tasks/:id` - Menghapus task
+- `PATCH /tasks/:id/assign` - Assign task ke user (Admin only)
+
+### External API
+- `GET /holidays/:year` - Mendapatkan daftar hari libur berdasarkan tahun
+- `GET /health` - Health check endpoint
+
+## Cara Menjalankan
 
 ### Prasyarat
+- Docker & Docker Compose
+- Node.js (untuk pengembangan lokal)
+- npm atau yarn
 
-* Node.js (>= 14.x)
-* PostgreSQL
-* Redis
+### Menggunakan Docker
 
-### Instalasi
+1. Clone repository
+```bash
+git clone <repository-url>
+cd task-management-system
+```
 
+2. Setup environment variables
+```bash
+cp .env.example .env
+# Edit .env sesuai kebutuhan
+```
+
+3. Jalankan dengan Docker Compose
+```bash
+# Mode development
+docker-compose up -d
+```
+
+4. Akses API di `http://localhost:3001`
+
+### Development Lokal
+- Versi node yang dipakai adalah v20.3.0
+1. Install dependencies
 ```bash
 npm install
 ```
 
-### Konfigurasi
+2. Setup database PostgreSQL dan Redis
 
-Siapkan file `.env` dengan contoh di `.env.example`.
-
-### Menjalankan Aplikasi
-
+3. Jalankan aplikasi
 ```bash
-# development
-npm run start
-
-# watch mode
 npm run start:dev
-
-# production mode
-npm run start:prod
 ```
 
-## Testing
+## Design Patterns
 
-```bash
-# unit tests
-npm run test
+Sistem mengimplementasikan beberapa design pattern modern:
+- Repository Pattern
+- Dependency Injection
+- DTO Pattern
+- Guards dan Interceptors
+- Decorator Pattern
 
-# e2e tests
-npm run test:e2e
+## Lisensi
 
-# test coverage
-npm run test:cov
-```
+[MIT](LICENSE)
