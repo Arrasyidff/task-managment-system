@@ -1,0 +1,402 @@
+{
+	"info": {
+		"_postman_id": "47a26e04-36dc-42fe-8078-f849a0f764f8",
+		"name": "Task Managment System",
+		"description": "# Task Management System API Documentation\n\nThis document provides comprehensive documentation for the Task Management System API endpoints.\n\n## Base URL\n\n```\nhttp://localhost:3001\n\n ```\n\n## Authentication\n\nThe API uses JWT (JSON Web Token) for authentication. For protected endpoints, include the JWT token in the Authorization header:\n\n```\nAuthorization: Bearer <your_jwt_token>\n\n ```\n\n### Authentication Endpoints\n\n#### Register New User\n\nCreates a new user account.\n\n- **URL**: `/auth/register`\n    \n- **Method**: `POST`\n    \n- **Auth Required**: No\n    \n- **Content-Type**: `application/json`\n    \n- **Body**:\n    \n\n``` json\n{\n  \"username\": \"johndoe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"securePassword123\",\n  \"role\": \"user\"  // Optional, defaults to \"user\" if not provided\n}\n\n ```\n\n- **Success Response**: `201 Created`\n    \n\n``` json\n{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n  \"username\": \"johndoe\",\n  \"email\": \"john.doe@example.com\",\n  \"role\": \"user\",\n  \"createdAt\": \"2025-04-23T12:34:56.789Z\",\n  \"updatedAt\": \"2025-04-23T12:34:56.789Z\"\n}\n\n ```\n\n- **Error Responses**:\n    \n    - `400 Bad Request` - Invalid input data\n        \n    - `409 Conflict` - Username or email already exists\n        \n\n#### Login\n\nAuthenticates a user and returns a JWT token.\n\n- **URL**: `/auth/login`\n    \n- **Method**: `POST`\n    \n- **Auth Required**: No\n    \n- **Content-Type**: `application/json`\n    \n- **Body**:\n    \n\n``` json\n{\n  \"username\": \"johndoe\",\n  \"password\": \"securePassword123\"\n}\n\n ```\n\n- **Success Response**: `200 OK`\n    \n\n``` json\n{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n    \"username\": \"johndoe\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"user\",\n    \"createdAt\": \"2025-04-23T12:34:56.789Z\",\n    \"updatedAt\": \"2025-04-23T12:34:56.789Z\"\n  }\n}\n\n ```\n\n- **Error Responses**:\n    \n    - `401 Unauthorized` - Invalid credentials\n        \n\n## Tasks Management\n\n### Task Endpoints\n\n#### Get All Tasks\n\nRetrieves all tasks for the current user. Admin users can see all tasks.\n\n- **URL**: `/tasks`\n    \n- **Method**: `GET`\n    \n- **Auth Required**: Yes\n    \n- **Query Parameters**:\n    \n    - `sortBy` (optional): Field to sort by (e.g., `createdAt`, `dueDate`, `priority`)\n        \n    - `sortOrder` (optional): Sort order (`ASC` or `DESC`, default is `DESC`)\n        \n    - `status` (optional): Filter by status (`pending`, `in_progress`, `completed`, `canceled`)\n        \n    - `priority` (optional): Filter by priority (`low`, `medium`, `high`)\n        \n- **Success Response**: `200 OK`\n    \n\n``` json\n[\n  {\n    \"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n    \"title\": \"Complete API Documentation\",\n    \"description\": \"Write comprehensive API docs for the task management system\",\n    \"status\": \"in_progress\",\n    \"priority\": \"high\",\n    \"dueDate\": \"2025-05-01T18:00:00.000Z\",\n    \"userId\": \"9876-5432-fedc-ba10\",\n    \"isOnHoliday\": false,\n    \"createdAt\": \"2025-04-23T12:34:56.789Z\",\n    \"updatedAt\": \"2025-04-23T12:34:56.789Z\",\n    \"logs\": [],\n    \"user\": {\n      \"id\": \"9876-5432-fedc-ba10\",\n      \"username\": \"johndoe\",\n      \"email\": \"john.doe@example.com\",\n      \"role\": \"user\",\n      \"createdAt\": \"2025-04-10T12:00:00.000Z\",\n      \"updatedAt\": \"2025-04-10T12:00:00.000Z\"\n    }\n  },\n  // More tasks...\n]\n\n ```\n\n- **Error Responses**:\n    \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `500 Internal Server Error` - Server error\n        \n\n#### Get Task by ID\n\nRetrieves a specific task by ID.\n\n- **URL**: `/tasks/:id`\n    \n- **Method**: `GET`\n    \n- **Auth Required**: Yes\n    \n- **URL Parameters**:\n    \n    - `id`: Task ID\n        \n- **Success Response**: `200 OK`\n    \n\n``` json\n{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n  \"title\": \"Complete API Documentation\",\n  \"description\": \"Write comprehensive API docs for the task management system\",\n  \"status\": \"in_progress\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2025-05-01T18:00:00.000Z\",\n  \"userId\": \"9876-5432-fedc-ba10\",\n  \"isOnHoliday\": false,\n  \"createdAt\": \"2025-04-23T12:34:56.789Z\",\n  \"updatedAt\": \"2025-04-23T12:34:56.789Z\",\n  \"logs\": [\n        {\n            \"id\": \"b2539189-37bc-498b-9c2d-74a9f6eaca76\",\n            \"action\": \"assigned\",\n            \"assignedBy\": {\n                \"id\": \"9876-5432-fedc-ba10\",\n                \"name\": \"johndoe\"\n            },\n            \"assignedTo\": {\n                \"id\": \"9876-5432-fedc-ba10\",\n                \"name\": \"johndoe\"\n            },\n            \"createdAt\": \"2025-04-24T03:00:12.546Z\",\n            \"updatedAt\": \"2025-04-24T03:00:12.546Z\"\n        }\n   ],\n  \"user\": {\n    \"id\": \"9876-5432-fedc-ba10\",\n    \"username\": \"johndoe\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"user\",\n    \"createdAt\": \"2025-04-10T12:00:00.000Z\",\n    \"updatedAt\": \"2025-04-10T12:00:00.000Z\"\n  }\n}\n\n ```\n\n- **Error Responses**:\n    \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `403 Forbidden` - User doesn't have permission to access this task\n        \n    - `404 Not Found` - Task not found\n        \n    - `500 Internal Server Error` - Server error\n        \n\n#### Create Task\n\nCreates a new task.\n\n- **URL**: `/tasks`\n    \n- **Method**: `POST`\n    \n- **Auth Required**: Yes\n    \n- **Content-Type**: `application/json`\n    \n- **Body**:\n    \n\n``` json\n{\n  \"title\": \"New Task\",\n  \"description\": \"Description of the new task\",\n  \"priority\": \"medium\",\n  \"status\": \"pending\",\n  \"dueDate\": \"2025-05-15T18:00:00.000Z\"\n}\n\n ```\n\n- **Success Response**: `201 Created`\n    \n\n``` json\n{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n  \"title\": \"New Task\",\n  \"description\": \"Description of the new task\",\n  \"status\": \"pending\",\n  \"priority\": \"medium\",\n  \"dueDate\": \"2025-05-15T18:00:00.000Z\",\n  \"userId\": \"9876-5432-fedc-ba10\",\n  \"isOnHoliday\": false,\n  \"createdAt\": \"2025-04-23T12:34:56.789Z\",\n  \"updatedAt\": \"2025-04-23T12:34:56.789Z\",\n  \"logs\": [],\n  \"user\": {\n    \"id\": \"9876-5432-fedc-ba10\",\n    \"username\": \"johndoe\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"user\",\n    \"createdAt\": \"2025-04-10T12:00:00.000Z\",\n    \"updatedAt\": \"2025-04-10T12:00:00.000Z\"\n  }\n}\n\n ```\n\n- **Error Responses**:\n    \n    - `400 Bad Request` - Invalid input data or task scheduled on a holiday\n        \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `500 Internal Server Error` - Server error\n        \n\n#### Update Task\n\nUpdates an existing task.\n\n- **URL**: `/tasks/:id`\n    \n- **Method**: `PATCH`\n    \n- **Auth Required**: Yes\n    \n- **URL Parameters**:\n    \n    - `id`: Task ID\n        \n- **Content-Type**: `application/json`\n    \n- **Body** (all fields are optional):\n    \n\n``` json\n{\n  \"title\": \"Updated Task Title\",\n  \"description\": \"Updated description\",\n  \"status\": \"in_progress\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2025-05-20T18:00:00.000Z\"\n}\n\n ```\n\n- **Success Response**: `200 OK`\n    \n\n``` json\n{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n  \"title\": \"Updated Task Title\",\n  \"description\": \"Updated description\",\n  \"status\": \"in_progress\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2025-05-20T18:00:00.000Z\",\n  \"userId\": \"9876-5432-fedc-ba10\",\n  \"isOnHoliday\": false,\n  \"createdAt\": \"2025-04-23T12:34:56.789Z\",\n  \"updatedAt\": \"2025-04-23T14:45:12.345Z\",\n  \"logs\": [],\n  \"user\": {\n    \"id\": \"9876-5432-fedc-ba10\",\n    \"username\": \"johndoe\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"user\",\n    \"createdAt\": \"2025-04-10T12:00:00.000Z\",\n    \"updatedAt\": \"2025-04-10T12:00:00.000Z\"\n  }\n}\n\n ```\n\n- **Error Responses**:\n    \n    - `400 Bad Request` - Invalid input data or task scheduled on a holiday\n        \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `403 Forbidden` - User doesn't have permission to update this task\n        \n    - `404 Not Found` - Task not found\n        \n    - `500 Internal Server Error` - Server error\n        \n\n#### Delete Task\n\nDeletes a task.\n\n- **URL**: `/tasks/:id`\n    \n- **Method**: `DELETE`\n    \n- **Auth Required**: Yes\n    \n- **URL Parameters**:\n    \n    - `id`: Task ID\n        \n- **Success Response**: `200 OK`\n    \n\n``` json\n1\n\n ```\n\n- **Error Responses**:\n    \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `403 Forbidden` - User doesn't have permission to delete this task\n        \n    - `404 Not Found` - Task not found\n        \n    - `500 Internal Server Error` - Server error\n        \n\n#### Assign Task to User (Admin Only)\n\nAssigns a task to another user. Only available to admin users.\n\n- **URL**: `/tasks/:id/assign`\n    \n- **Method**: `PATCH`\n    \n- **Auth Required**: Yes (Admin role)\n    \n- **URL Parameters**:\n    \n    - `id`: Task ID\n        \n- **Content-Type**: `application/json`\n    \n- **Body**:\n    \n\n``` json\n{\n  \"userId\": \"5555-6666-7777-8888\"\n}\n\n ```\n\n- **Success Response**: `200 OK`\n    \n\n``` json\n{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ab\",\n  \"title\": \"Updated Task Title\",\n  \"description\": \"Updated description\",\n  \"status\": \"in_progress\",\n  \"priority\": \"high\",\n  \"dueDate\": \"2025-05-20T18:00:00.000Z\",\n  \"userId\": \"5555-6666-7777-8888\",\n  \"isOnHoliday\": false,\n  \"createdAt\": \"2025-04-23T12:34:56.789Z\",\n  \"updatedAt\": \"2025-04-23T15:30:45.678Z\",\n  \"logs\": [],\n  \"user\": {\n    \"id\": \"5555-6666-7777-8888\",\n    \"username\": \"janedoe\",\n    \"email\": \"jane.doe@example.com\",\n    \"role\": \"user\",\n    \"createdAt\": \"2025-04-15T14:30:00.000Z\",\n    \"updatedAt\": \"2025-04-15T14:30:00.000Z\"\n  }\n}\n\n ```\n\n- **Error Responses**:\n    \n    - `400 Bad Request` - Invalid input data\n        \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `403 Forbidden` - User doesn't have admin role\n        \n    - `404 Not Found` - Task or user not found\n        \n    - `500 Internal Server Error` - Server error\n        \n\n## System Health\n\n### Health Check Endpoint\n\nChecks if the API is running.\n\n- **URL**: `/health`\n    \n- **Method**: `GET`\n    \n- **Auth Required**: No\n    \n- **Success Response**: `200 OK`\n    \n\n``` json\n{\n  \"status\": \"OK\",\n  \"timestamp\": \"2025-04-23T12:34:56.789Z\",\n  \"service\": \"Task Management API\",\n  \"version\": \"1.0.0\"\n}\n\n ```\n\n## User Management\n\n### User Endpoints (Admin Only)\n\n#### Get All Users\n\nRetrieves all users. Only available to admin users.\n\n- **URL**: `/users`\n    \n- **Method**: `GET`\n    \n- **Auth Required**: Yes (Admin role)\n    \n- **Success Response**: `200 OK`\n    \n\n``` json\n[\n  {\n    \"id\": \"9876-5432-fedc-ba10\",\n    \"username\": \"johndoe\",\n    \"email\": \"john.doe@example.com\",\n    \"role\": \"user\",\n    \"createdAt\": \"2025-04-10T12:00:00.000Z\",\n    \"updatedAt\": \"2025-04-10T12:00:00.000Z\"\n  },\n  {\n    \"id\": \"5555-6666-7777-8888\",\n    \"username\": \"janedoe\",\n    \"email\": \"jane.doe@example.com\",\n    \"role\": \"user\",\n    \"createdAt\": \"2025-04-15T14:30:00.000Z\",\n    \"updatedAt\": \"2025-04-15T14:30:00.000Z\"\n  },\n  // More users...\n]\n\n ```\n\n- **Error Responses**:\n    \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `403 Forbidden` - User doesn't have admin role\n        \n    - `500 Internal Server Error` - Server error\n        \n\n#### Get User by ID\n\nRetrieves a specific user by ID. Only available to admin users.\n\n- **URL**: `/users/:id`\n    \n- **Method**: `GET`\n    \n- **Auth Required**: Yes (Admin role)\n    \n- **URL Parameters**:\n    \n    - `id`: User ID\n        \n- **Success Response**: `200 OK`\n    \n\n``` json\n{\n  \"id\": \"9876-5432-fedc-ba10\",\n  \"username\": \"johndoe\",\n  \"email\": \"john.doe@example.com\",\n  \"role\": \"user\",\n  \"createdAt\": \"2025-04-10T12:00:00.000Z\",\n  \"updatedAt\": \"2025-04-10T12:00:00.000Z\"\n}\n\n ```\n\n- **Error Responses**:\n    \n    - `401 Unauthorized` - Missing or invalid token\n        \n    - `403 Forbidden` - User doesn't have admin role\n        \n    - `404 Not Found` - User not found\n        \n    - `500 Internal Server Error` - Server error\n        \n\n## Status Codes\n\nThe API returns the following status codes:\n\n| Status Code | Description |\n| --- | --- |\n| 200 | OK |\n| 201 | Created |\n| 400 | Bad Request |\n| 401 | Unauthorized |\n| 403 | Forbidden |\n| 404 | Not Found |\n| 409 | Conflict |\n| 500 | Internal Server Error |\n\n## Data Types\n\n### Task Status\n\n- `pending` - Task is pending\n    \n- `in_progress` - Task is in progress\n    \n- `completed` - Task is completed\n    \n- `canceled` - Task is canceled\n    \n\n### Task Priority\n\n- `low` - Low priority\n    \n- `medium` - Medium priority\n    \n- `high` - High priority\n    \n\n### User Roles\n\n- `admin` - Administrator role\n    \n- `user` - Regular user role\n    \n\n## Error Handling\n\nAll errors follow a standard format:\n\n``` json\n{\n  \"statusCode\": 400,\n  \"message\": \"Error message here\",\n  \"error\": \"Bad Request\"\n}\n\n ```\n\nFor validation errors, additional details may be provided:\n\n``` json\n{\n  \"statusCode\": 400,\n  \"message\": [\n    \"title must be a string\",\n    \"priority must be one of the following values: low, medium, high\"\n  ],\n  \"error\": \"Bad Request\"\n}\n\n ```",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "13589897"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"arfafa\",\n    \"email\": \"arfafa@mail.com\",\n    \"password\": \"arfafa\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/auth/register",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"arfafa\",\n  \"password\": \"arfafa\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/auth/login",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get List",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/users",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get By Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/users/4d42c359-3ee0-443b-b203-c5988ce29e4e",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"users",
+								"4d42c359-3ee0-443b-b203-c5988ce29e4e"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Tasks",
+			"item": [
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Implementasi API Authentication\",\n    \"description\": \"Membuat sistem autentikasi dengan JWT untuk Task Management System\",\n    \"priority\": \"high\",\n    \"status\": \"in_progress\",\n    \"dueDate\": \"2025-05-01T00:00:00.000Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/tasks/",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"tasks",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get List",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/tasks/",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"tasks",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get By Id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/tasks/857f577f-f2b0-4606-8455-b7e634ba2633",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"tasks",
+								"857f577f-f2b0-4606-8455-b7e634ba2633"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Task Title\",\n    \"description\": \"This is the updated description for the task\",\n    \"status\": \"in_progress\",\n    \"priority\": \"high\",\n    \"dueDate\": \"2025-06-30T15:00:00.000Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/tasks/6fdc47e9-7c18-490e-9277-47c9f8140f39",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"tasks",
+								"6fdc47e9-7c18-490e-9277-47c9f8140f39"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Electronics\",\n  \"slug\": \"electronics\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/tasks/6fdc47e9-7c18-490e-9277-47c9f8140f39",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"tasks",
+								"6fdc47e9-7c18-490e-9277-47c9f8140f39"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Assign",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"bf94a246-6e4a-4e8c-910c-b524fd91ba4d\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/tasks/857f577f-f2b0-4606-8455-b7e634ba2633/assign",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"tasks",
+								"857f577f-f2b0-4606-8455-b7e634ba2633",
+								"assign"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/"
+		}
+	]
+}
