@@ -67,7 +67,7 @@ export class TasksService {
     ));
   }
 
-  async findOneWithLogs(id: string, currentUser: User, isDtoResponse: boolean = false): Promise<ResponseTaskDto | Task> {
+  async findOneWithLogs(id: string, currentUser: User): Promise<ResponseTaskDto | Task> {
     return this.findOne(id, currentUser, true);
   }
 
@@ -78,8 +78,8 @@ export class TasksService {
     }
     if (isDtoResponse) {
       options.relations = [
-      ...options.relations, 'activityLogs', 'activityLogs.assignedBy', 'activityLogs.assignedTo'
-    ];
+        ...options.relations, 'activityLogs', 'activityLogs.assignedBy', 'activityLogs.assignedTo'
+      ];
     }
     const task = await this.tasksRepository.findOne(options);
 
@@ -105,11 +105,16 @@ export class TasksService {
     if (task.dueDate) {
       isOnHoliday = await this.holidayApiService.isHoliday(new Date(task.dueDate));
     }
+
+    const copyTask = JSON.parse(JSON.stringify(task))
+    const logs = copyTask?.activityLogs;
+    delete copyTask.activityLogs;
+
     return new ResponseTaskDto({
-      ...task,
+      ...copyTask,
       isOnHoliday: isOnHoliday,
       user: this.usersService.userWithoutPassword(user),
-      logs: task?.activityLogs ? task.activityLogs.map((log) => ({
+      logs: logs ? logs.map((log: ActivityLog) => ({
         id: log.id,
         action: log.action,
         assignedBy: {

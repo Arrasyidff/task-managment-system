@@ -43,7 +43,7 @@ export class TasksController {
   findOne(@Param('id') id: string, @Req() req): Promise<ResponseTaskDto>
   {
     const user = req.user as User;
-    return this.tasksService.findOneWithLogs(id, user, true);
+    return this.tasksService.findOneWithLogs(id, user);
   }
 
   @Patch(':id')
