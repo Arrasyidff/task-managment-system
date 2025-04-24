@@ -43,7 +43,7 @@ export class TasksController {
   findOne(@Param('id') id: string, @Req() req): Promise<ResponseTaskDto>
   {
     const user = req.user as User;
-    return this.tasksService.findOne(id, user, true);
+    return this.tasksService.findOneWithLogs(id, user, true);
   }
 
   @Patch(':id')
@@ -68,7 +68,9 @@ export class TasksController {
   assignTask(
     @Param('id') id: string,
     @Body() assignTaskDto: AssignTaskDto,
+    @Req() req
   ): Promise<ResponseTaskDto> {
-    return this.tasksService.assignTask(id, assignTaskDto);
+    const user = req.user as User;
+    return this.tasksService.assignTask(id, assignTaskDto, user);
   }
 }

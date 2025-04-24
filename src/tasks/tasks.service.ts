@@ -10,6 +10,9 @@ import { UsersService } from '../users/users.service';
 import { Role } from '../users/enums/role.enum';
 import { ResponseTaskDto } from './dto/response-task.dto';
 import { HolidayApiService } from 'src/external/holiday-api/holiday-api.service';
+import { ActivityLog } from 'src/activityLog/entities/activityLog.entity';
+import { ActivityLogService } from 'src/activityLog/activityLog.service';
+import { ActivityAction } from 'src/activityLog/dto/create-activity.dto';
 
 @Injectable()
 export class TasksService {
@@ -20,6 +23,7 @@ export class TasksService {
     private tasksRepository: Repository<Task>,
     private usersService: UsersService,
     private holidayApiService: HolidayApiService,
+    private activityLogService: ActivityLogService,
     private dataSource: DataSource,
   ) {}
 
@@ -63,11 +67,21 @@ export class TasksService {
     ));
   }
 
+  async findOneWithLogs(id: string, currentUser: User, isDtoResponse: boolean = false): Promise<ResponseTaskDto | Task> {
+    return this.findOne(id, currentUser, true);
+  }
+
   async findOne(id: string, currentUser: User, isDtoResponse: boolean = false): Promise<ResponseTaskDto | Task> {
-    const task = await this.tasksRepository.findOne({
+    const options = {
       where: { id },
       relations: ['user'],
-    });
+    }
+    if (isDtoResponse) {
+      options.relations = [
+      ...options.relations, 'activityLogs', 'activityLogs.assignedBy', 'activityLogs.assignedTo'
+    ];
+    }
+    const task = await this.tasksRepository.findOne(options);
 
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found`);
@@ -94,7 +108,21 @@ export class TasksService {
     return new ResponseTaskDto({
       ...task,
       isOnHoliday: isOnHoliday,
-      user: this.usersService.userWithoutPassword(user)
+      user: this.usersService.userWithoutPassword(user),
+      logs: task?.activityLogs ? task.activityLogs.map((log) => ({
+        id: log.id,
+        action: log.action,
+        assignedBy: {
+          id: log.assignedBy.id,
+          name: log.assignedBy.username,
+        },
+        assignedTo: {
+          id: log.assignedTo.id,
+          name: log.assignedTo.username,
+        },
+        createdAt: log.createdAt,
+        updatedAt: log.createdAt
+      })) : []
     });
   }
 
@@ -136,9 +164,8 @@ export class TasksService {
     this.logger.log(`Task deleted: ${id} by user: ${currentUser.id}`);
   }
 
-  async assignTask(id: string, assignTaskDto: AssignTaskDto): Promise<ResponseTaskDto> {
+  async assignTask(id: string, assignTaskDto: AssignTaskDto, currentUser: User): Promise<ResponseTaskDto> {
     const { userId } = assignTaskDto;
-    const user = await this.usersService.findOneById(userId);
 
     // Use a transaction to ensure data consistency
     const queryRunner = this.dataSource.createQueryRunner();
@@ -146,33 +173,37 @@ export class TasksService {
     await queryRunner.startTransaction();
     
     try {
-      const task = await this.tasksRepository.findOne({ where: { id } });
+      const userRepo = queryRunner.manager.getRepository(User);
+      const taskRepo = queryRunner.manager.getRepository(Task);
+      const activiityLogRepo = queryRunner.manager.getRepository(ActivityLog);
       
+      const task = await taskRepo.findOneByOrFail({ id: id });
       if (!task) {
         throw new NotFoundException(`Task with ID "${id}" not found`);
       }
-      
       task.userId = userId;
-      
       const updatedTask = await queryRunner.manager.save(task);
+
+      const assignedTo = await userRepo.findOneByOrFail({ id: userId });
+
+      const log = this.activityLogService.buildLogEntity(
+        { task: task.id, assignedBy: currentUser.id, assignedTo: userId, action: ActivityAction.ASSIGNED },
+        task,
+        currentUser,
+        assignedTo,
+      );
+      await activiityLogRepo.save(log);
       
       await queryRunner.commitTransaction();
       this.logger.log(`Task ${id} assigned to user ${userId}`);
       
-      return new ResponseTaskDto({...updatedTask, user: user});
+      return new ResponseTaskDto({...updatedTask, user: assignedTo});
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Failed to assign task ${id} to user ${userId}: ${error.message}`);
       throw error;
     } finally {
       await queryRunner.release();
-    }
-  }
-
-  private async validateTaskDate(date: Date): Promise<void> {
-    const isHoliday = await this.holidayApiService.isHoliday(date);
-    if (isHoliday) {
-      throw new BadRequestException('Cannot schedule task on a holiday. Please select a different date.');
     }
   }
 }

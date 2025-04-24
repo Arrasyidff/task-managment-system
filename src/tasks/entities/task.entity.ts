@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { ActivityLog } from 'src/activityLog/entities/activityLog.entity';
 
 export enum TaskStatus {
   PENDING = 'pending',
@@ -45,6 +46,9 @@ export class Task {
   @ManyToOne(() => User, user => user.tasks)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @OneToMany(() => ActivityLog, (log) => log.task)
+  activityLogs: ActivityLog[];
 
   @Column({ name: 'user_id', nullable: true })
   userId: string;
